@@ -1,0 +1,5 @@
+C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/.cxx/Debug/1w1v685j/x86_64/CMakeFiles/edith_eye.dir
+C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/.cxx/Debug/1w1v685j/x86_64/CMakeFiles/edith_hand.dir
+C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/.cxx/Debug/1w1v685j/x86_64/CMakeFiles/edith_dimming.dir
+C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/.cxx/Debug/1w1v685j/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/.cxx/Debug/1w1v685j/x86_64/CMakeFiles/rebuild_cache.dir

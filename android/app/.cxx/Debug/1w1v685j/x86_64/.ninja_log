@@ -1,0 +1,11 @@
+# ninja log v5
+225	358	7991247398353201	C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/build/intermediates/cxx/Debug/1w1v685j/obj/x86_64/libedith_hand.so	c28cdaa1b957d92e
+11	225	7991247397062528	CMakeFiles/edith_hand.dir/hand_tracking_jni.cpp.o	a803e6d82adfdd0c
+25	154	7991247396352526	CMakeFiles/edith_dimming.dir/dimming_jni.cpp.o	67e73d2a6eb03c6b
+284	432	7991247398913229	C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/build/intermediates/cxx/Debug/1w1v685j/obj/x86_64/libedith_eye.so	d30088f15078f2dd
+3	283	7991247397637796	CMakeFiles/edith_eye.dir/eye_tracking_jni.cpp.o	a7523dcbd51f66f6
+155	308	7991247397837782	C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/build/intermediates/cxx/Debug/1w1v685j/obj/x86_64/libedith_dimming.so	e75c0e336f7ebd52
+3	114	7991258221122658	build.ninja	5de0b827b3303873
+1	10	0	clean	f2554257ded7d113
+3	186	7991258223760645	CMakeFiles/edith_eye.dir/eye_tracking_jni.cpp.o	a7523dcbd51f66f6
+186	305	7991258224827806	C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/build/intermediates/cxx/Debug/1w1v685j/obj/x86_64/libedith_eye.so	d30088f15078f2dd

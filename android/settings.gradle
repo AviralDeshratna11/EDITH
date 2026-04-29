@@ -1,0 +1,21 @@
+// ═══════════════════════════════════════════════════════
+// settings.gradle  (project root)
+// ═══════════════════════════════════════════════════════
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        // Magic Leap SDK repository
+        maven { url = uri("https://maven.magicleap.com/artifactory/magicleap") }
+    }
+}
+rootProject.name = "EDITH-AR"
+include(":app")

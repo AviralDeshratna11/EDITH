@@ -1,0 +1,52 @@
+{
+  "buildFiles": [
+    "C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\src\\main\\cpp\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\AVIRAL PC\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\.cxx\\Debug\\1w1v685j\\x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\AVIRAL PC\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\.cxx\\Debug\\1w1v685j\\x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "edith_dimming::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "edith_dimming",
+      "output": "C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\build\\intermediates\\cxx\\Debug\\1w1v685j\\obj\\x86_64\\libedith_dimming.so",
+      "runtimeFiles": []
+    },
+    "edith_eye::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "edith_eye",
+      "output": "C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\build\\intermediates\\cxx\\Debug\\1w1v685j\\obj\\x86_64\\libedith_eye.so",
+      "runtimeFiles": []
+    },
+    "edith_hand::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "edith_hand",
+      "output": "C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\build\\intermediates\\cxx\\Debug\\1w1v685j\\obj\\x86_64\\libedith_hand.so",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "C:\\Users\\AVIRAL PC\\AppData\\Local\\Android\\Sdk\\ndk\\25.1.8937393\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe",
+      "cppCompilerExecutable": "C:\\Users\\AVIRAL PC\\AppData\\Local\\Android\\Sdk\\ndk\\25.1.8937393\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

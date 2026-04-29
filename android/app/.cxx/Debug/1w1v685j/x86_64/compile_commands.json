@@ -1,0 +1,17 @@
+[
+{
+  "directory": "C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/.cxx/Debug/1w1v685j/x86_64",
+  "command": "C:\\Users\\AVIRAL~1\\AppData\\Local\\Android\\Sdk\\ndk\\251~1.893\\TOOLCH~1\\llvm\\prebuilt\\WINDOW~1\\bin\\CLANG_~1.EXE --target=x86_64-none-linux-android29 --sysroot=\"C:/Users/AVIRAL PC/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot\" -Dedith_eye_EXPORTS -I\"C:/Users/AVIRAL PC/MagicLeap/mlsdk/v1.12.0/include\" -I\"C:/Users/AVIRAL PC/AppData/Local/Android/Sdk/ndk/25.1.8937393/sources/android/native_app_glue\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -o CMakeFiles\\edith_eye.dir\\eye_tracking_jni.cpp.o -c \"C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\src\\main\\cpp\\eye_tracking_jni.cpp\"",
+  "file": "C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\src\\main\\cpp\\eye_tracking_jni.cpp"
+},
+{
+  "directory": "C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/.cxx/Debug/1w1v685j/x86_64",
+  "command": "C:\\Users\\AVIRAL~1\\AppData\\Local\\Android\\Sdk\\ndk\\251~1.893\\TOOLCH~1\\llvm\\prebuilt\\WINDOW~1\\bin\\CLANG_~1.EXE --target=x86_64-none-linux-android29 --sysroot=\"C:/Users/AVIRAL PC/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot\" -Dedith_hand_EXPORTS -I\"C:/Users/AVIRAL PC/MagicLeap/mlsdk/v1.12.0/include\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -o CMakeFiles\\edith_hand.dir\\hand_tracking_jni.cpp.o -c \"C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\src\\main\\cpp\\hand_tracking_jni.cpp\"",
+  "file": "C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\src\\main\\cpp\\hand_tracking_jni.cpp"
+},
+{
+  "directory": "C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/.cxx/Debug/1w1v685j/x86_64",
+  "command": "C:\\Users\\AVIRAL~1\\AppData\\Local\\Android\\Sdk\\ndk\\251~1.893\\TOOLCH~1\\llvm\\prebuilt\\WINDOW~1\\bin\\CLANG_~1.EXE --target=x86_64-none-linux-android29 --sysroot=\"C:/Users/AVIRAL PC/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot\" -Dedith_dimming_EXPORTS -I\"C:/Users/AVIRAL PC/MagicLeap/mlsdk/v1.12.0/include\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -o CMakeFiles\\edith_dimming.dir\\dimming_jni.cpp.o -c \"C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\src\\main\\cpp\\dimming_jni.cpp\"",
+  "file": "C:\\Users\\AVIRAL PC\\Downloads\\EDITH-AR-v4-COMPLETE\\android\\app\\src\\main\\cpp\\dimming_jni.cpp"
+}
+]

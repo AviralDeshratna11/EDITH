@@ -1,0 +1,78 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.6.0"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "edith_native",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "edith_dimming::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-edith_dimming-Debug-7a1eb366ebfa0db2f71d.json",
+					"name" : "edith_dimming",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "edith_eye::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-edith_eye-Debug-46f14e92e07c7fd15f93.json",
+					"name" : "edith_eye",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "edith_hand::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-edith_hand-Debug-445fbada401469521dd2.json",
+					"name" : "edith_hand",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/.cxx/Debug/1w1v685j/x86_64",
+		"source" : "C:/Users/AVIRAL PC/Downloads/EDITH-AR-v4-COMPLETE/android/app/src/main/cpp"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

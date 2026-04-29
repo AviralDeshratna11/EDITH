@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+<title>EDITH — Connection Setup</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000408;color:#00f5ff;font-family:'Courier New',monospace;
+     min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{width:100%;max-width:520px;border:1px solid rgba(0,200,255,.4);border-radius:4px;
+     padding:28px;background:rgba(0,20,50,.9)}
+h1{font-size:22px;letter-spacing:8px;margin-bottom:4px;
+   text-shadow:0 0 20px #00f5ff}
+.sub{font-size:9px;letter-spacing:4px;color:rgba(0,200,255,.5);margin-bottom:24px}
+.row{display:flex;justify-content:space-between;align-items:center;
+     padding:8px 0;border-bottom:1px solid rgba(0,200,255,.1);font-size:11px}
+.row .lbl{color:rgba(0,200,255,.6);letter-spacing:1px}
+.row .val{font-weight:700}
+.ok {color:#30ff80}  .warn{color:#f0c040}  .err{color:#ff3b30}
+.section{margin:20px 0 10px;font-size:9px;letter-spacing:3px;
+         color:rgba(0,200,255,.5);border-bottom:1px solid rgba(0,200,255,.2);padding-bottom:4px}
+input{width:100%;background:rgba(0,10,30,.9);border:1px solid rgba(0,200,255,.4);
+      border-radius:3px;color:#c0e8ff;font-family:'Courier New',monospace;font-size:14px;
+      padding:10px 12px;outline:none;margin-top:8px;letter-spacing:1px}
+input:focus{border-color:#00f5ff;box-shadow:0 0 10px rgba(0,200,255,.2)}
+.btn{display:block;width:100%;margin-top:10px;padding:12px;border-radius:3px;
+     border:1px solid #00f5ff;background:rgba(0,60,140,.4);color:#00f5ff;
+     font-family:'Courier New',monospace;font-size:12px;letter-spacing:3px;
+     cursor:pointer;transition:all .2s;text-align:center}
+.btn:hover{background:rgba(0,100,200,.5);box-shadow:0 0 20px rgba(0,200,255,.3)}
+.btn.go{background:rgba(0,180,80,.25);border-color:#30ff80;color:#30ff80}
+.btn.go:hover{background:rgba(0,200,100,.35)}
+#log{margin-top:16px;font-size:10px;color:rgba(0,200,255,.6);
+     min-height:60px;line-height:1.8;letter-spacing:1px}
+#log .e{color:#ff3b30} #log .s{color:#30ff80} #log .w{color:#f0c040}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>E·D·I·T·H</h1>
+  <div class="sub">CONNECTION SETUP — MAGIC LEAP 2</div>
+
+  <div class="section">NETWORK DIAGNOSTICS</div>
+  <div class="row"><span class="lbl">Your Device IP</span><span class="val" id="my-ip">detecting…</span></div>
+  <div class="row"><span class="lbl">Browser</span><span class="val" id="ua">—</span></div>
+  <div class="row"><span class="lbl">WebSocket Support</span><span class="val" id="ws-sup">checking…</span></div>
+  <div class="row"><span class="lbl">Web Speech API</span><span class="val" id="speech-sup">checking…</span></div>
+  <div class="row"><span class="lbl">Microphone</span><span class="val" id="mic-sup">checking…</span></div>
+  <div class="row"><span class="lbl">Backend Ping</span><span class="val" id="ping-val">—</span></div>
+  <div class="row"><span class="lbl">WebSocket Test</span><span class="val" id="ws-test">—</span></div>
+
+  <div class="section">BACKEND IP ADDRESS</div>
+  <div style="font-size:10px;color:rgba(0,200,255,.5);margin-top:4px">
+    Enter your laptop/PC IP address (find with <b style="color:#c0e8ff">ipconfig</b> or <b style="color:#c0e8ff">ifconfig</b>)
+  </div>
+  <input id="ip-input" type="text" placeholder="e.g.  192.168.1.100"
+         value="" inputmode="decimal"/>
+  <button class="btn" onclick="testConnection()">▶ TEST CONNECTION</button>
+  <button class="btn go" id="launch-btn" onclick="launchEDITH()" style="display:none">
+    ◉ LAUNCH EDITH →
+  </button>
+
+  <div id="log"></div>
+</div>
+
+<script>
+const PORT = 8000;
+let confirmedIP = '';
+
+function log(msg, cls='') {
+  const d = document.getElementById('log');
+  d.innerHTML += `<div class="${cls}">${msg}</div>`;
+}
+function set(id, txt, cls='') {
+  const el = document.getElementById(id);
+  el.textContent = txt;
+  el.className = 'val ' + cls;
+}
+
+// ── Detect browser info ────────────────────────────────────────
+const ua = navigator.userAgent;
+const isML2 = ua.includes('Magic') || ua.includes('ML') || ua.includes('Lumin');
+set('ua', isML2 ? 'Magic Leap 2 ✓' : ua.slice(0,35)+'…', isML2 ? 'ok' : 'warn');
+
+// Detect device IP via WebRTC
+async function detectIP() {
+  try {
+    const pc = new RTCPeerConnection({iceServers:[]});
+    pc.createDataChannel('');
+    await pc.createOffer().then(o=>pc.setLocalDescription(o));
+    await new Promise(r=>setTimeout(r,400));
+    const sdp = pc.localDescription?.sdp||'';
+    const m = sdp.match(/\d+\.\d+\.\d+\.\d+/g)||[];
+    const local = m.find(ip=>ip.startsWith('192.')||ip.startsWith('10.')||ip.startsWith('172.'));
+    set('my-ip', local||'unknown', local?'ok':'warn');
+    pc.close();
+    return local;
+  } catch(e) {
+    set('my-ip', 'unavailable', 'warn');
+  }
+}
+
+// ── Feature checks ─────────────────────────────────────────────
+function checkFeatures() {
+  // WebSocket
+  if (typeof WebSocket !== 'undefined') {
+    set('ws-sup', 'Supported ✓', 'ok');
+  } else {
+    set('ws-sup', 'Not supported ✗', 'err');
+  }
+  // Web Speech
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    set('speech-sup', 'Available ✓', 'ok');
+  } else {
+    set('speech-sup', 'Not available', 'warn');
+  }
+  // Mic
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({audio:true})
+      .then(s=>{ s.getTracks().forEach(t=>t.stop()); set('mic-sup','Granted ✓','ok'); })
+      .catch(e=>set('mic-sup', e.name==='NotAllowedError'?'Denied — allow in settings':'Unavailable','warn'));
+  } else {
+    set('mic-sup','Not supported','err');
+  }
+}
+
+// ── Connection test ────────────────────────────────────────────
+async function testConnection() {
+  const ipRaw = document.getElementById('ip-input').value.trim();
+  if (!ipRaw) { log('⚠ Enter IP address first','w'); return; }
+  const ip = ipRaw.replace(/[^0-9.]/g,'');
+  document.getElementById('log').innerHTML = '';
+  log(`Testing connection to ${ip}:${PORT}…`);
+
+  // 1. HTTP ping
+  set('ping-val','testing…','warn');
+  try {
+    const t0 = Date.now();
+    const r = await fetch(`http://${ip}:${PORT}/api/health`, {signal: AbortSignal.timeout(5000)});
+    const ms = Date.now()-t0;
+    if (r.ok) {
+      const d = await r.json();
+      set('ping-val',`${ms}ms ✓`,'ok');
+      log(`<span class="s">✓ HTTP OK (${ms}ms) — EDITH v${d.version||'?'} online</span>`);
+      log(`  Gmail: ${d.gmail?'authenticated':'not authenticated'}`);
+      log(`  OpenRouter: ${d.openrouter?'key set':'NO KEY — set OPENROUTER_API_KEY in .env'}`);
+    } else {
+      set('ping-val',`HTTP ${r.status}`,'err');
+      log(`<span class="e">✗ HTTP ${r.status} — is server running?</span>`);
+    }
+  } catch(e) {
+    set('ping-val','Unreachable ✗','err');
+    log(`<span class="e">✗ Cannot reach ${ip}:${PORT}</span>`);
+    log(`<span class="w">  Check: both devices on same WiFi?</span>`);
+    log(`<span class="w">  Check: firewall blocking port ${PORT}?</span>`);
+    log(`<span class="w">  Check: server running? (python server.py)</span>`);
+    return;
+  }
+
+  // 2. WebSocket test
+  set('ws-test','testing…','warn');
+  try {
+    await new Promise((res,rej)=>{
+      const ws = new WebSocket(`ws://${ip}:${PORT}/ws/ml2-test`);
+      const t = setTimeout(()=>{ ws.close(); rej(new Error('timeout')); }, 4000);
+      ws.onopen  = ()=>{ ws.send('{"type":"ping"}'); };
+      ws.onmessage=()=>{ clearTimeout(t); ws.close(); res(); };
+      ws.onerror = ()=>{ clearTimeout(t); rej(new Error('WS error')); };
+    });
+    set('ws-test','Connected ✓','ok');
+    log(`<span class="s">✓ WebSocket OK — real-time voice will work</span>`);
+  } catch(e) {
+    set('ws-test','Failed — using REST','warn');
+    log(`<span class="w">⚠ WebSocket blocked — will use REST fallback (voice still works via Web Speech)</span>`);
+  }
+
+  // 3. All good — show launch button
+  confirmedIP = ip;
+  localStorage.setItem('edith_ip', ip);
+  document.getElementById('launch-btn').style.display='block';
+  log(`<span class="s">✓ Ready! Press LAUNCH EDITH →</span>`);
+}
+
+function launchEDITH() {
+  if (!confirmedIP) return;
+  window.location.href = `http://${confirmedIP}:${PORT}/ui/index.html?ip=${confirmedIP}`;
+}
+
+// ── Init ────────────────────────────────────────────────────────
+(async()=>{
+  checkFeatures();
+  const ip = await detectIP();
+  // Pre-fill with saved or detected IP
+  const saved = localStorage.getItem('edith_ip');
+  if (saved) document.getElementById('ip-input').value = saved;
+  // Auto-test if IP is known
+  if (saved) { setTimeout(testConnection, 800); }
+})();
+</script>
+</body>
+</html>

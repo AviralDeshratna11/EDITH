@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=1280, initial-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#000408"/>
+<title>E.D.I.T.H — AR Interface v2.1</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   EDITH Holographic HUD  |  Magic Leap 2 + Browser
+   ML2 display: 1440×1760 per eye  |  70° FOV
+   ═══════════════════════════════════════════════════════════ */
+/* Fonts served locally by backend — no Google Fonts dependency */
+
+:root {
+  --cyan:   #00f5ff;
+  --blue:   #0077ff;
+  --glow:   #00cfff;
+  --gold:   #f0c040;
+  --red:    #ff3b30;
+  --green:  #30ff80;
+  --panel:  rgba(0,20,50,0.82);
+  --border: rgba(0,200,255,0.30);
+  --font:   'Orbitron','Share Tech Mono','Rajdhani','Exo 2','Courier New',monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: #000408;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scanlines */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9000;
+  background: repeating-linear-gradient(
+    0deg, rgba(0,240,255,0.025) 0px, transparent 1px, transparent 3px);
+}
+/* Vignette */
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 8999;
+  background: radial-gradient(ellipse at center,transparent 50%,rgba(0,0,20,.65) 100%);
+}
+
+/* ═══ BOOT SCREEN ═══ */
+#boot {
+  position: fixed; inset: 0; background: #000408;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+#boot-logo {
+  font-size: clamp(32px,5vw,56px); font-weight: 900; letter-spacing: 14px;
+  color: var(--cyan); text-shadow: 0 0 30px var(--cyan), 0 0 60px rgba(0,200,255,.4);
+  margin-bottom: 8px;
+}
+#boot-sub {
+  font-size: 11px; letter-spacing: 6px; color: rgba(0,200,255,.5);
+  margin-bottom: 36px;
+}
+#boot-bar { width: 340px; height: 2px; background: rgba(0,200,255,.15); border-radius: 1px; }
+#boot-fill {
+  height: 100%; width: 0; background: var(--cyan); border-radius: 1px;
+  box-shadow: 0 0 12px var(--cyan); transition: width .25s ease;
+}
+#boot-log {
+  width: 340px; margin-top: 24px; font-size: 10px;
+  color: rgba(0,200,255,.55); letter-spacing: 1px; min-height: 180px;
+}
+#boot-log p { margin-bottom: 3px; }
+
+/* ═══ MAIN HUD GRID ═══ */
+#hud {
+  display: none; position: fixed; inset: 0;
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  grid-template-rows: 72px 1fr 68px;
+  gap: 6px; padding: 12px;
+}
+#hud.hidden { display: none !important; }
+
+/* ═══ PANEL BASE ═══ */
+.pnl {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  animation: pnlIn .35s ease forwards;
+}
+@keyframes pnlIn { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:scale(1)} }
+/* Corner accents */
+.pnl::before,.pnl::after { content:''; position:absolute; }
+.pnl::before { top:0;left:0; width:14px;height:14px; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan); }
+.pnl::after  { bottom:0;right:0; width:14px;height:14px; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan); }
+
+.ptitle {
+  font-size: 8px; letter-spacing: 3px; color: var(--cyan);
+  text-transform: uppercase; padding-bottom: 8px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ═══ TOP BAR ═══ */
+#top {
+  grid-column: 1/4;
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(90deg,rgba(0,15,40,.95),rgba(0,40,90,.7),rgba(0,15,40,.95));
+  border: 1px solid var(--border); border-radius: 3px; padding: 0 20px;
+}
+#logo {
+  font-size: clamp(18px,2.5vw,26px); font-weight: 900; letter-spacing: 10px;
+  color: var(--cyan); text-shadow: 0 0 20px var(--cyan);
+  animation: breathe 2.5s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,100%{ text-shadow:0 0 18px var(--cyan),0 0 35px rgba(0,200,255,.4); }
+  50%{ text-shadow:0 0 28px var(--cyan),0 0 55px rgba(0,200,255,.7),0 0 80px rgba(0,200,255,.2); }
+}
+#clock { font-size: 20px; font-weight: 700; color: var(--cyan); letter-spacing: 4px; }
+.badge {
+  font-size: 9px; letter-spacing: 2px; color: rgba(0,200,255,.6);
+}
+.badge b { color: #fff; }
+#ws-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--red);
+  box-shadow: 0 0 8px var(--red); transition: all .4s; display: inline-block;
+}
+#ws-dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 1.6s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ═══ LEFT PANEL ═══ */
+#left { grid-column:1; grid-row:2; overflow-y:auto; }
+
+.metric { margin-bottom: 12px; }
+.metric .lbl { font-size: 8px; letter-spacing: 2px; color: rgba(0,200,255,.55); }
+.metric .val { font-size: 14px; color: #fff; font-weight: 700; margin: 2px 0; }
+.mbar { height: 3px; background: rgba(0,200,255,.12); border-radius: 2px; }
+.mfill { height: 100%; border-radius: 2px;
+         background: linear-gradient(90deg,var(--blue),var(--cyan));
+         box-shadow: 0 0 6px var(--cyan); transition: width .8s ease; }
+
+/* Gaze visualiser */
+#gaze-box {
+  width: 100%; aspect-ratio: 16/10;
+  background: rgba(0,0,0,.5); border: 1px solid rgba(0,200,255,.18);
+  border-radius: 2px; position: relative; overflow: hidden; margin-top: 6px;
+}
+#gaze-cursor {
+  position: absolute; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--cyan); box-shadow: 0 0 14px var(--cyan);
+  transform: translate(-50%,-50%);
+  transition: left .12s ease, top .12s ease;
+  left: 50%; top: 50%;
+}
+#gaze-cursor::after {
+  content: ''; position: absolute; inset: 3px; border-radius: 50%;
+  background: rgba(0,200,255,.35);
+}
+#gaze-box::before,#gaze-box::after {
+  content:''; position:absolute; background:rgba(0,200,255,.15);
+}
+#gaze-box::before { width:100%;height:1px;top:50%;transform:translateY(-50%); }
+#gaze-box::after  { height:100%;width:1px;left:50%;transform:translateX(-50%); }
+#gaze-target-lbl { font-size:8px;letter-spacing:2px;color:rgba(0,200,255,.6); margin-bottom:4px; }
+#gesture-lbl { font-size:11px;color:#c0e8ff;margin-top:6px; }
+
+/* ═══ CENTRE PANEL ═══ */
+#centre { grid-column:2; grid-row:2; padding:0; overflow:hidden; position:relative; }
+
+/* Rotating hex */
+#hexring {
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(55%,300px); height:min(55%,300px);
+  animation:hexspin 22s linear infinite; opacity:.12; pointer-events:none;
+}
+@keyframes hexspin { to{ transform:translate(-50%,-50%) rotate(360deg); } }
+
+/* Reticle */
+#reticle {
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:70px; height:70px; pointer-events:none;
+}
+#reticle::before,#reticle::after {
+  content:''; position:absolute; border-color:var(--cyan); border-style:solid;
+  box-shadow: 0 0 6px var(--cyan);
+}
+#reticle::before { top:0;left:0;width:18px;height:18px;border-width:2px 0 0 2px; }
+#reticle::after  { bottom:0;right:0;width:18px;height:18px;border-width:0 2px 2px 0; }
+#reticle-ring {
+  position:absolute; inset:20%; border:1px solid rgba(0,200,255,.45); border-radius:50%;
+  animation:spin 5s linear infinite;
+}
+@keyframes spin { to{transform:rotate(360deg);} }
+#reticle-dot {
+  position:absolute; left:50%;top:50%;transform:translate(-50%,-50%);
+  width:4px;height:4px;background:var(--cyan);border-radius:50%;
+  box-shadow:0 0 10px var(--cyan);
+}
+
+/* Content area */
+#content {
+  position:absolute; inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:14px; overflow-y:auto;
+}
+
+/* Cards */
+.card {
+  width:100%; max-width:540px; background:rgba(0,18,45,.88);
+  border:1px solid var(--border); border-radius:3px;
+  padding:14px; margin-bottom:8px; animation:slideIn .28s ease;
+}
+@keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.card-head { font-size:8px;letter-spacing:3px;color:var(--cyan);margin-bottom:8px;text-transform:uppercase; }
+.card-body { font-size:13px;color:#bde6ff;line-height:1.65; }
+.card-meta { font-size:9px;color:rgba(0,200,255,.45);margin-top:6px;letter-spacing:1px; }
+
+/* Voice bars */
+#vbars {
+  position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+  display:flex; gap:3px; align-items:flex-end; height:44px;
+  opacity:0; transition:opacity .3s; pointer-events:none;
+}
+#vbars.on { opacity:1; }
+.vbar {
+  width:4px; min-height:4px; border-radius:2px;
+  background:linear-gradient(0deg,var(--blue),var(--cyan));
+  box-shadow:0 0 5px var(--cyan); transition:height .08s;
+}
+
+/* Scan FX */
+#scan-fx {
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(0deg,transparent,rgba(0,200,255,.18),transparent);
+  opacity:0;
+}
+#scan-fx.run { animation:scanMove 1.8s ease-in-out forwards; }
+@keyframes scanMove {
+  0%{opacity:0;transform:translateY(-100%)}
+  15%{opacity:1}85%{opacity:1}
+  100%{opacity:0;transform:translateY(100%)}
+}
+
+/* ═══ RIGHT PANEL ═══ */
+#right { grid-column:3; grid-row:2; display:flex;flex-direction:column;gap:8px; overflow:hidden; }
+#chat-hist { flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent; }
+.cmsg { padding:6px 8px;margin-bottom:5px;border-radius:2px;font-size:11px;line-height:1.5; }
+.cmsg.user { background:rgba(0,60,140,.4);border-left:2px solid var(--blue);color:#9cd4ff; }
+.cmsg.assistant { background:rgba(0,30,70,.4);border-left:2px solid var(--cyan);color:#c0f0ff; }
+.cmsg .who { font-size:7px;letter-spacing:2px;opacity:.55;margin-bottom:2px;text-transform:uppercase; }
+#email-list { overflow-y:auto;max-height:160px; }
+.email-row { padding:5px 0;border-bottom:1px solid rgba(0,200,255,.1);cursor:pointer; }
+.email-row:hover { background:rgba(0,80,180,.15); }
+.email-from { font-size:9px;color:var(--cyan); }
+.email-subj { font-size:10px;color:#c0e8ff; }
+.email-snip { font-size:8px;color:rgba(0,200,255,.45);margin-top:1px; }
+
+/* ═══ BOTTOM BAR ═══ */
+#bottom {
+  grid-column:1/4;
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(90deg,rgba(0,15,40,.95),rgba(0,40,90,.7),rgba(0,15,40,.95));
+  border:1px solid var(--border);border-radius:3px;padding:0 16px;
+}
+#mode-lbl { font-size:9px;letter-spacing:3px;color:rgba(0,200,255,.55);white-space:nowrap; }
+#voice-btn {
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,60,140,.35);border:1px solid var(--cyan);border-radius:3px;
+  padding:8px 18px;cursor:pointer;color:var(--cyan);font-family:var(--font);
+  font-size:10px;letter-spacing:2px;white-space:nowrap;transition:all .2s;
+}
+#voice-btn:hover,#voice-btn:active { background:rgba(0,100,200,.45);box-shadow:0 0 20px rgba(0,200,255,.3); }
+#voice-btn.on { background:rgba(0,160,80,.25);border-color:var(--green);color:var(--green);
+                box-shadow:0 0 22px rgba(0,200,100,.35); }
+#cmd-input {
+  flex:1;min-width:0;
+  background:rgba(0,15,40,.85);border:1px solid var(--border);border-radius:3px;
+  color:#c0e8ff;font-family:var(--font);font-size:12px;letter-spacing:1px;
+  padding:8px 12px;outline:none;transition:border-color .2s;
+}
+#cmd-input:focus { border-color:var(--cyan);box-shadow:0 0 8px rgba(0,200,255,.2); }
+#cmd-input::placeholder { color:rgba(0,200,255,.28); }
+#send-btn {
+  background:rgba(0,60,140,.35);border:1px solid var(--border);border-radius:3px;
+  padding:8px 14px;color:var(--cyan);font-family:var(--font);font-size:10px;letter-spacing:2px;
+  cursor:pointer;white-space:nowrap;transition:all .2s;
+}
+#send-btn:hover { background:rgba(0,100,200,.45);border-color:var(--cyan); }
+#lat-badge { font-size:8px;color:rgba(0,200,255,.4);letter-spacing:1px;white-space:nowrap; }
+
+/* ═══ TOAST ═══ */
+#toast {
+  position:fixed;top:90px;left:50%;transform:translateX(-50%);
+  background:rgba(0,18,50,.96);border:1px solid var(--cyan);border-radius:3px;
+  padding:10px 22px;font-size:11px;color:var(--cyan);letter-spacing:2px;
+  box-shadow:0 0 28px rgba(0,200,255,.35);
+  opacity:0;pointer-events:none;z-index:9990;
+  transition:opacity .25s;text-align:center;max-width:80vw;
+}
+#toast.show { opacity:1; }
+
+/* ═══ EMAIL MODAL ═══ */
+#email-modal {
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(0,3,12,.86);z-index:500;backdrop-filter:blur(4px);
+}
+#email-modal.open { display:flex; }
+#email-compose {
+  background:rgba(0,18,50,.98);border:1px solid var(--cyan);border-radius:4px;
+  padding:22px;width:min(520px,90vw);box-shadow:0 0 40px rgba(0,200,255,.3);
+}
+.mfield { margin-bottom:10px; }
+.mfield label { display:block;font-size:8px;letter-spacing:2px;color:rgba(0,200,255,.55);margin-bottom:4px; }
+.mfield input,.mfield textarea {
+  width:100%;background:rgba(0,10,30,.85);border:1px solid var(--border);
+  border-radius:2px;color:#c0e8ff;font-family:var(--font);font-size:12px;
+  padding:7px 10px;outline:none;
+}
+.mfield textarea { min-height:90px;resize:vertical; }
+.mactions { display:flex;gap:8px;margin-top:12px; }
+.btn-ok  { flex:1;background:rgba(0,200,100,.2);border:1px solid var(--green);color:var(--green);
+            font-family:var(--font);font-size:10px;letter-spacing:2px;padding:10px;border-radius:2px;cursor:pointer; }
+.btn-no  { flex:1;background:rgba(200,50,50,.2);border:1px solid var(--red);color:var(--red);
+            font-family:var(--font);font-size:10px;letter-spacing:2px;padding:10px;border-radius:2px;cursor:pointer; }
+
+/* ═══ MEDIA MODAL ═══ */
+#media-modal {
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,5,.94);z-index:400;
+}
+#media-modal.open { display:flex; }
+#yt-frame {
+  width:min(820px,94vw);aspect-ratio:16/9;
+  border:2px solid var(--cyan);border-radius:3px;
+  box-shadow:0 0 60px rgba(0,200,255,.4);
+}
+#close-media {
+  position:absolute;top:16px;right:16px;
+  background:rgba(0,18,50,.9);border:1px solid var(--red);border-radius:3px;
+  color:var(--red);font-family:var(--font);font-size:10px;letter-spacing:2px;
+  padding:8px 14px;cursor:pointer;
+}
+
+/* ═══ AUTH PANEL ═══ */
+#auth-panel {
+  display:none;position:fixed;inset:0;align-items:center;justify-content:center;
+  background:rgba(0,3,12,.88);z-index:600;
+}
+#auth-panel.open { display:flex; }
+#auth-box {
+  background:rgba(0,18,50,.98);border:1px solid var(--gold);border-radius:4px;
+  padding:28px;width:min(440px,90vw);text-align:center;
+  box-shadow:0 0 40px rgba(240,192,64,.2);
+}
+#auth-code {
+  font-size:36px;font-weight:900;letter-spacing:10px;color:var(--gold);
+  text-shadow:0 0 20px var(--gold);margin:16px 0;
+}
+#auth-url { font-size:11px;color:rgba(240,192,64,.7);letter-spacing:2px;margin-bottom:12px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ BOOT ═══ -->
+<div id="boot">
+  <div id="boot-logo">E·D·I·T·H</div>
+  <div id="boot-sub">EVEN DEAD, I'M THE HERO</div>
+  <div id="boot-bar"><div id="boot-fill"></div></div>
+  <div id="boot-log"></div>
+</div>
+
+<!-- ═══ HUD ═══ -->
+<div id="hud" style="display:none">
+
+  <!-- TOP -->
+  <div id="top" class="pnl" style="padding:0 18px">
+    <div id="logo">E·D·I·T·H</div>
+    <div style="display:flex;gap:18px;align-items:center">
+      <div class="badge">SIGNAL <b id="signal">████</b></div>
+      <div class="badge">ML2 <b>ONLINE</b></div>
+      <div class="badge">BUILD <b>2.1.0</b></div>
+    </div>
+    <div id="clock">--:--:--</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="ws-dot"></div>
+      <span id="ws-lbl" class="badge">CONNECTING</span>
+    </div>
+    <div class="badge">XRCC <b style="color:var(--gold)">2026</b></div>
+  </div>
+
+  <!-- LEFT -->
+  <div id="left" class="pnl">
+    <div class="ptitle">◈ Sensor Array</div>
+    <div class="metric">
+      <div class="lbl">BATTERY</div><div class="val" id="bat-v">---%</div>
+      <div class="mbar"><div class="mfill" id="bat-b" style="width:0%"></div></div>
+    </div>
+    <div class="metric">
+      <div class="lbl">LLM LATENCY</div><div class="val" id="lat-v">--- ms</div>
+      <div class="mbar"><div class="mfill" id="lat-b" style="width:50%"></div></div>
+    </div>
+    <div class="metric">
+      <div class="lbl">MEMORY TURNS</div><div class="val" id="mem-v">0</div>
+    </div>
+
+    <div class="ptitle" style="margin-top:10px">◉ Eye Tracking</div>
+    <div id="gaze-target-lbl">TARGET: SCANNING…</div>
+    <div id="gaze-box"><div id="gaze-cursor"></div></div>
+
+    <div class="ptitle" style="margin-top:10px">✋ Gesture</div>
+    <div id="gesture-lbl">STANDBY</div>
+  </div>
+
+  <!-- CENTRE -->
+  <div id="centre" class="pnl">
+    <!-- Hex ring -->
+    <svg id="hexring" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="150,8 292,82 292,218 150,292 8,218 8,82"
+               fill="none" stroke="rgba(0,200,255,1)" stroke-width="1"/>
+      <polygon points="150,30 270,97 270,203 150,270 30,203 30,97"
+               fill="none" stroke="rgba(0,200,255,.6)" stroke-width=".6"/>
+      <polygon points="150,55 248,112 248,188 150,245 52,188 52,112"
+               fill="none" stroke="rgba(0,200,255,.35)" stroke-width=".4"/>
+      <g stroke="rgba(0,200,255,.7)" stroke-width="1.2">
+        <line x1="150" y1="8" x2="150" y2="0"/>
+        <line x1="292" y1="82" x2="300" y2="77"/>
+        <line x1="292" y1="218" x2="300" y2="223"/>
+        <line x1="150" y1="292" x2="150" y2="300"/>
+        <line x1="8" y1="218" x2="0" y2="223"/>
+        <line x1="8" y1="82" x2="0" y2="77"/>
+      </g>
+    </svg>
+    <!-- Reticle -->
+    <div id="reticle">
+      <div id="reticle-ring"></div>
+      <div id="reticle-dot"></div>
+    </div>
+    <!-- Voice bars -->
+    <div id="vbars"></div>
+    <!-- Content -->
+    <div id="content"></div>
+    <!-- Scan FX -->
+    <div id="scan-fx"></div>
+  </div>
+
+  <!-- RIGHT -->
+  <div id="right" class="pnl">
+    <div class="ptitle">◈ Comms</div>
+    <div id="chat-hist"></div>
+    <div class="ptitle" style="margin-top:6px">◈ Inbox</div>
+    <div id="email-list"></div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div id="bottom" class="pnl" style="padding:0 16px">
+    <div id="mode-lbl">MODE: STANDBY</div>
+    <button id="voice-btn" onclick="toggleVoice()">
+      <span id="mic-icon">🎙</span>
+      <span id="voice-lbl">ENGAGE</span>
+    </button>
+    <input id="cmd-input" type="text" placeholder="SPEAK OR TYPE A COMMAND…"
+           onkeydown="if(event.key==='Enter')sendText()"/>
+    <button id="send-btn" onclick="sendText()">SEND ▶</button>
+    <div id="lat-badge">--- ms</div>
+  </div>
+
+</div><!-- /#hud -->
+
+<!-- ═══ EMAIL MODAL ═══ -->
+<div id="email-modal">
+  <div id="email-compose">
+    <div class="ptitle">◈ Compose Message</div>
+    <div class="mfield"><label>TO</label><input id="em-to" type="email"/></div>
+    <div class="mfield"><label>SUBJECT</label><input id="em-sub" type="text"/></div>
+    <div class="mfield"><label>BODY</label><textarea id="em-body"></textarea></div>
+    <div class="mactions">
+      <button class="btn-ok" onclick="confirmEmail()">◉ SEND</button>
+      <button class="btn-no" onclick="closeEmail()">✕ CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MEDIA MODAL ═══ -->
+<div id="media-modal">
+  <iframe id="yt-frame" src="" allowfullscreen
+          allow="autoplay; encrypted-media; fullscreen"></iframe>
+  <button id="close-media" onclick="closeMedia()">✕ CLOSE</button>
+</div>
+
+<!-- ═══ GMAIL AUTH PANEL ═══ -->
+<div id="auth-panel">
+  <div id="auth-box">
+    <div class="ptitle" style="border:none">◈ Gmail Authentication Required</div>
+    <div id="auth-url">Visit this URL on your phone:</div>
+    <div style="font-size:12px;color:var(--cyan);margin:8px 0" id="auth-link">https://google.com/device</div>
+    <div style="font-size:10px;color:rgba(0,200,255,.6);margin-bottom:8px">Enter this code:</div>
+    <div id="auth-code">----</div>
+    <div style="font-size:9px;color:rgba(0,200,255,.4)">Code expires in <span id="auth-expire">30:00</span></div>
+    <button class="btn-no" style="margin-top:16px;width:100%" onclick="closeAuth()">DISMISS</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   EDITH Frontend Engine  v2.1.0
+   Works in:  Desktop browser | ML2 WebView | ML2 Browser
+   ═══════════════════════════════════════════════════════════ */
+
+// ── CONFIG ──────────────────────────────────────────────────
+// IP priority: ?ip= URL param → localStorage → page host → fallback
+const BACKEND = (() => {
+  const params = new URLSearchParams(location.search);
+  const fromParam = params.get('ip');
+  const fromStorage = localStorage.getItem('edith_ip');
+  const fromHost = location.hostname || '';
+  const ip = fromParam || fromStorage || fromHost || '127.0.0.1';
+  if (fromParam) localStorage.setItem('edith_ip', fromParam);
+  return `http://${ip}:8000`;
+})();
+const WS_URL  = BACKEND.replace('http','ws') + '/ws/edith-main';
+const SESSION = 'edith-main';
+// Show IP in console so ML2 user can confirm
+console.log('[EDITH] Backend:', BACKEND);
+
+// ── STATE ────────────────────────────────────────────────────
+let ws, isListening = false, mediaStream, audioCtx, processor;
+let ttsChunks = [], ttsFormat = 'mp3', ttsAudio = null;
+let pendingDraft = null, gazeTarget = '', memTurns = 0;
+const vBars = [];
+
+// ── BOOT ─────────────────────────────────────────────────────
+const BOOT_LINES = [
+  '> Initialising E.D.I.T.H v2.1.0…',
+  '> Loading neural architecture…',
+  '> Eye tracking: sub-degree accuracy ready',
+  '> Hand tracking: 26 keypoints active',
+  '> Spatial mesh: building…',
+  '> Connecting to OpenRouter gateway…',
+  '> Gmail OAuth: checking tokens…',
+  '> YouTube API: online',
+  '> Web search: DuckDuckGo + fallbacks',
+  '> Holographic shaders: loaded',
+  '> Voice pipeline: STT → LLM → TTS',
+  '> Segmented dimming: configured',
+  '> All systems nominal.',
+  '> EDITH is online. Awaiting command.',
+];
+
+async function boot() {
+  const log  = document.getElementById('boot-log');
+  const fill = document.getElementById('boot-fill');
+  for (let i = 0; i < BOOT_LINES.length; i++) {
+    const p = document.createElement('p');
+    p.textContent = BOOT_LINES[i]; log.appendChild(p);
+    fill.style.width = `${Math.round((i+1)/BOOT_LINES.length*100)}%`;
+    await sleep(150 + Math.random()*120);
+  }
+  await sleep(500);
+  document.getElementById('boot').style.display = 'none';
+  const hud = document.getElementById('hud');
+  hud.style.display = 'grid';
+  initUI();
+  wsConnect();
+}
+
+// ── WEBSOCKET ─────────────────────────────────────────────────
+let wsMode = 'connecting'; // 'live' | 'rest' | 'connecting'
+
+function wsConnect() {
+  // If we already know WS is blocked (ML2 can block local ws://), skip straight to REST
+  if (localStorage.getItem('edith_ws_blocked') === '1') {
+    wsLive(false, true); return;
+  }
+  try {
+    ws = new WebSocket(WS_URL);
+    const timeout = setTimeout(() => {
+      if (ws.readyState !== WebSocket.OPEN) {
+        ws.close();
+        console.warn('[EDITH] WS timed out — switching to REST mode');
+        localStorage.setItem('edith_ws_blocked', '1');
+        wsLive(false, true);
+      }
+    }, 5000);
+    ws.onopen  = () => {
+      clearTimeout(timeout);
+      localStorage.removeItem('edith_ws_blocked');
+      wsMode = 'live';
+      wsLive(true);
+      toast('EDITH backend connected ✓');
+    };
+    ws.onclose = () => {
+      wsMode = 'rest';
+      wsLive(false);
+      setTimeout(wsConnect, 4000);
+    };
+    ws.onerror = () => {
+      clearTimeout(timeout);
+      wsMode = 'rest';
+      wsLive(false, true);
+    };
+    ws.onmessage = e => { try { onMsg(JSON.parse(e.data)); } catch(_){} };
+  } catch(err) {
+    wsLive(false, true);
+    setTimeout(wsConnect, 5000);
+  }
+}
+
+function wsLive(on, restMode) {
+  const dot = document.getElementById('ws-dot');
+  const lbl = document.getElementById('ws-lbl');
+  if (on)       { dot.className='live'; lbl.textContent='LIVE'; }
+  else if (restMode) { dot.style.background='#f0c040'; dot.style.boxShadow='0 0 8px #f0c040';
+                       lbl.textContent='REST'; }
+  else          { dot.className=''; lbl.textContent='OFFLINE'; }
+}
+
+function wsSend(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(obj)); return true;
+  }
+  return false;
+}
+
+// REST fallback sender — used when WS is blocked on ML2
+async function apiSend(text, extra={}) {
+  try {
+    const r = await fetch(`${BACKEND}/api/command`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text, session_id:SESSION, gaze_target:gazeTarget, ...extra}),
+    });
+    const d = await r.json();
+    onResult(d);
+  } catch(e) {
+    addChat('assistant', '⚠ Cannot reach EDITH server. Check backend is running.');
+    console.error('[EDITH] REST send error:', e);
+  }
+}
+
+// ── MESSAGE HANDLER ────────────────────────────────────────────
+function onMsg(msg) {
+  switch(msg.type) {
+    case 'transcript':
+      document.getElementById('cmd-input').value = msg.text;
+      break;
+    case 'intent_detected':
+      setMode(msg.hud_mode);
+      break;
+    case 'command_result':
+      onResult(msg);
+      break;
+    case 'audio_chunk':
+      enqueueTTS(msg.data, msg.format || 'mp3');
+      break;
+    case 'audio_end':
+      flushTTS();   // play all accumulated ElevenLabs/Cartesia chunks
+      break;
+    case 'proactive_suggestion':
+      showSuggestion(msg.text, msg.action);
+      break;
+    case 'action_confirmed':
+      toast(`✓ ${msg.speech || msg.action + ' confirmed'}`);
+      break;
+    case 'pong':
+      break;
+    case 'biometrics_update':
+      renderBiometrics(msg.data); updateBiometricBadge(msg.data); break;
+    case 'spatial_observed':
+      toast(`👁 Observed: ${msg.entities.map(e=>e.label).join(', ')}`); break;
+    case 'ambient_update':
+      if (msg.summary) renderAmbientSummary(msg.summary.hud_data||msg.summary);
+      (msg.alerts||[]).forEach(a=>toast(`⚡ ${a.speech||a.type}`));
+      break;
+    case 'proactive_intervention':
+      handleProactiveIntervention(msg); break;
+    case 'prediction':
+      showPrediction(msg); break;
+  }
+}
+
+// ── COMMAND FLOW ────────────────────────────────────────────────
+function sendText() {
+  const inp = document.getElementById('cmd-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  addChat('user', text);
+  memTurns++;
+  document.getElementById('mem-v').textContent = memTurns;
+
+  const payload = { type:'text_command', text, gaze_target: gazeTarget };
+  if (!wsSend(payload)) {
+    // REST fallback — works even when WS is blocked on ML2
+    apiSend(text);
+  }
+}
+
+function onResult(msg) {
+  if (!msg) return;
+  const hud = msg.hud_data || {};
+  if (msg.speech) addChat('assistant', msg.speech);
+  if (msg.latency_ms) updateLat(msg.latency_ms);
+
+  switch(hud.type) {
+    case 'search_panel':    renderSearch(hud);   break;
+    case 'email_list':      renderEmails(hud);   break;
+    case 'email_draft':     openEmailModal(hud.draft); break;
+    case 'email_summary':   renderCard('INBOX SUMMARY', hud.summary); break;
+    case 'media_player':    /* handled by action */ break;
+    case 'object_scan':     renderScan(hud);     break;
+    case 'weather_panel':   renderCard('WEATHER', hud.data); break;
+    case 'navigation':      renderCard('NAVIGATION', hud.summary); break;
+    case 'translation':     renderTranslation(hud); break;
+    case 'system_status':   renderStatus(hud);   break;
+    case 'chat_bubble':     renderCard('EDITH', hud.text); break;
+    case 'reminder_set':    renderCard('REMINDER SET', `${hud.reminder} — ${hud.time}`); break;
+    case 'auth_required':   startGmailAuth();    break;
+    case 'anchor_placed':   toast(`Anchor placed: ${hud.label}`); break;
+    // ── Advanced features ────────────────────────────────────────
+    case 'swarm_briefing':  renderSwarmBriefing(hud);  break;
+    case 'spatial_result':  renderSpatialResult(hud);  break;
+    case 'biometrics':      renderBiometrics(hud.data);break;
+    case 'ambient_summary': renderAmbientSummary(hud); break;
+    case 'prediction':      renderPrediction(hud);     break;
+    case 'tutorial_overlay':renderTutorial(hud);       break;
+  }
+
+  const act = msg.action;
+  if (act) {
+    if (act.type === 'open_youtube')         openMedia(act.embed_url, act.title);
+    if (act.type === 'require_confirmation') openEmailModal(act.payload);
+    if (act.type === 'scan_effect')          runScanFx();
+  }
+}
+
+// ── VOICE INPUT ─────────────────────────────────────────────────
+// ML2 Reality:
+//   - AOSP = no Google Play Services = no SpeechRecognizer
+//   - HTTP (not HTTPS) = getUserMedia blocked in WebView
+//   - AudioRecord via Kotlin bridge DOES work
+//   - Strategy: push-to-talk → record buffer → send to backend → Deepgram or type fallback
+//
+// Without DEEPGRAM_API_KEY the voice icon opens a large text input instead.
+
+const IS_ANDROID_WEBVIEW = typeof window.EdithNative !== 'undefined';
+let voiceRecordTimer = null;
+let voiceCountdown   = null;
+const MAX_RECORD_S   = 12;   // 12s max — enough for any command
+
+async function toggleVoice() {
+  isListening ? stopVoice() : await startVoice();
+}
+
+async function startVoice() {
+
+  // ── PATH 1: Android native bridge (ML2 APK) ──────────────────────
+  // Kotlin's VoiceService → AudioRecord → streams chunks to backend WS
+  // Backend transcribes with Deepgram if key is set, else shows type-prompt
+  if (IS_ANDROID_WEBVIEW) {
+    try {
+      window.EdithNative.startVoice();
+      setListening(true);
+      showVoiceMode('push-to-talk', 'RECORDING');
+      // Countdown timer — tap again to stop early
+      let secs = MAX_RECORD_S;
+      document.getElementById('voice-lbl').textContent = '🎙 ' + secs + 's';
+      voiceCountdown = setInterval(() => {
+        secs--;
+        document.getElementById('voice-lbl').textContent = '🎙 ' + secs + 's';
+        if (secs <= 0) stopVoice();
+      }, 1000);
+      return;
+    } catch(e) {
+      console.warn('[EDITH] Native bridge error:', e.message);
+    }
+  }
+
+  // ── PATH 2: Web Speech API (Chrome browser, not WebView) ─────────
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) { startSpeechAPI(SR); return; }
+
+  // ── PATH 3: getUserMedia → backend Deepgram ───────────────────────
+  if (navigator.mediaDevices?.getUserMedia) {
+    try { await startAudioRecord(); return; }
+    catch(e) { console.warn('[EDITH] getUserMedia:', e.name); }
+  }
+
+  // ── PATH 4: Text input fallback — always works ───────────────────
+  focusTextInput();
+}
+
+function focusTextInput() {
+  const inp = document.getElementById('cmd-input');
+  inp.placeholder = 'VOICE UNAVAILABLE — TYPE HERE AND PRESS ENTER ↩';
+  inp.focus();
+  toast('Voice not available on this device — type your command');
+}
+
+// Web Speech API (works in Chrome browser, not ML2 WebView)
+let speechRec = null;
+function startSpeechAPI(SR) {
+  try {
+    speechRec = new SR();
+    speechRec.continuous     = false;
+    speechRec.interimResults = true;
+    speechRec.lang           = 'en-US';
+    speechRec.onstart  = () => { setListening(true); showVoiceMode('webspeech','WEB STT'); };
+    speechRec.onend    = () => { setListening(false); speechRec = null; };
+    speechRec.onerror  = e  => {
+      setListening(false); speechRec = null;
+      window.EDITH.onSpeechError(e.error);
+    };
+    speechRec.onresult = e => {
+      const tr = Array.from(e.results).map(r=>r[0].transcript).join('');
+      document.getElementById('cmd-input').value = tr;
+      if (e.results[e.results.length-1].isFinal && tr.trim()) {
+        window.EDITH.onSpeechResult(tr, true);
+      }
+    };
+    speechRec.start();
+  } catch(e) {
+    toast('Web Speech: ' + e.message); focusTextInput();
+  }
+}
+
+// getUserMedia raw PCM (HTTPS/localhost only)
+async function startAudioRecord() {
+  mediaStream = await navigator.mediaDevices.getUserMedia({
+    audio:{sampleRate:16000, channelCount:1, echoCancellation:true, noiseSuppression:true}
+  });
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+  const src = audioCtx.createMediaStreamSource(mediaStream);
+  processor = audioCtx.createScriptProcessor(2048, 1, 1);
+  src.connect(processor); processor.connect(audioCtx.destination);
+  processor.onaudioprocess = e => {
+    const pcm = e.inputBuffer.getChannelData(0);
+    const i16 = new Int16Array(pcm.length);
+    for (let i=0;i<pcm.length;i++) i16[i]=Math.max(-32768,Math.min(32767,pcm[i]*32768));
+    wsSend({type:'audio_chunk', data:arrayBufferToBase64(i16.buffer), is_final:false});
+    animBars(pcm);
+  };
+  setListening(true);
+  showVoiceMode('pcm','PCM→BACKEND');
+}
+
+// Safe base64 — no btoa() call stack overflow on large arrays
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let bin = '';
+  for (let i=0;i<bytes.length;i+=8192)
+    bin += String.fromCharCode(...bytes.subarray(i,i+8192));
+  return btoa(bin);
+}
+
+function stopVoice() {
+  clearInterval(voiceCountdown); voiceCountdown = null;
+
+  if (IS_ANDROID_WEBVIEW) {
+    // Show processing state while WAV uploads to /api/transcribe
+    document.getElementById('voice-lbl').textContent = '⏳ PROCESSING';
+    document.getElementById('mic-icon').textContent  = '⏳';
+    try { window.EdithNative.stopVoice(); } catch(e) {}
+    // setListening(false) is called inside onSpeechResult when result arrives
+    return;
+  }
+
+  // Browser paths
+  if (speechRec)   { try {speechRec.stop();}catch(e){} speechRec=null; }
+  if (processor)   { processor.disconnect(); processor=null; }
+  if (audioCtx)    { audioCtx.close(); audioCtx=null; }
+  if (mediaStream) { mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
+  wsSend({type:'audio_chunk', data:'', is_final:true});
+  setListening(false);
+}
+
+function setListening(on) {
+  isListening = on;
+  const btn  = document.getElementById('voice-btn');
+  const lbl  = document.getElementById('voice-lbl');
+  const mic  = document.getElementById('mic-icon');
+  const bars = document.getElementById('vbars');
+  btn.className   = on ? 'on' : '';
+  if (!on) lbl.textContent = 'ENGAGE';
+  mic.textContent = on ? '🔴' : '🎙';
+  bars.className  = on ? 'on' : '';
+}
+
+function showVoiceMode(mode, label) {
+  const el = document.getElementById('mode-lbl');
+  if (el) el.textContent = 'MODE: VOICE (' + label + ')';
+}
+
+function animBarsFromText(len) {
+  const intensity = Math.min(1, len / 30);
+  vBars.forEach((b, i) => {
+    const h = 4 + Math.sin(i * 0.8 + Date.now() * 0.01) * intensity * 30;
+    b.style.height = Math.max(4, h) + 'px';
+  });
+}
+
+// ── TTS PLAYBACK ──────────────────────────────────────────────────
+// ElevenLabs sends MP3 chunks — accumulate all then play as one blob.
+
+function enqueueTTS(b64, format) {
+  ttsFormat = format || 'mp3';
+  if (b64) ttsChunks.push(b64);
+}
+
+function flushTTS() {
+  // Called on 'audio_end' — play everything accumulated
+  if (!ttsChunks.length) return;
+  const chunks = [...ttsChunks];
+  ttsChunks = [];
+
+  // Decode all base64 chunks into one Uint8Array
+  const arrays = chunks.map(b64 => {
+    const bin  = atob(b64);
+    const arr  = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  });
+  const total = arrays.reduce((s, a) => s + a.length, 0);
+  const full  = new Uint8Array(total);
+  let offset  = 0;
+  arrays.forEach(a => { full.set(a, offset); offset += a.length; });
+
+  const mimeType = ttsFormat === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+  const blob     = new Blob([full], { type: mimeType });
+  const url      = URL.createObjectURL(blob);
+
+  // Stop any previous TTS
+  if (ttsAudio) { ttsAudio.pause(); ttsAudio.src = ''; }
+
+  ttsAudio      = new Audio(url);
+  ttsAudio.volume = 1.0;
+  ttsAudio.onended = () => { URL.revokeObjectURL(url); ttsAudio = null; };
+  ttsAudio.onerror = (e) => {
+    console.warn('[EDITH] Audio playback error:', e, 'format:', mimeType);
+    // Fallback: try with AudioContext
+    tryAudioContextPlay(full).catch(err => console.warn('[EDITH] AudioContext fallback failed:', err));
+    URL.revokeObjectURL(url); ttsAudio = null;
+  };
+  ttsAudio.play().catch(e => {
+    console.warn('[EDITH] Audio.play() failed:', e.message);
+    // ML2 may need user gesture first — silently continue
+  });
+}
+
+async function tryAudioContextPlay(pcmBytes) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ab  = await ctx.decodeAudioData(pcmBytes.buffer.slice(0));
+    const src = ctx.createBufferSource();
+    src.buffer = ab; src.connect(ctx.destination); src.start();
+  } catch(e) {
+    console.warn('[EDITH] AudioContext fallback error:', e.message);
+  }
+}
+
+// ── GMAIL AUTH ────────────────────────────────────────────────────
+async function startGmailAuth() {
+  const r = await fetch(`${BACKEND}/auth/gmail/start`);
+  const d = await r.json();
+  if (d.error) { toast(d.error); return; }
+  document.getElementById('auth-link').textContent = d.verification_url;
+  document.getElementById('auth-code').textContent = d.user_code;
+  document.getElementById('auth-panel').classList.add('open');
+  // Countdown
+  let secs = d.expires_in || 1800;
+  const iv = setInterval(()=>{
+    secs--;
+    const m = String(Math.floor(secs/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    document.getElementById('auth-expire').textContent = `${m}:${s}`;
+    if (secs<=0) { clearInterval(iv); closeAuth(); }
+  },1000);
+  // Poll status
+  const poll = setInterval(async()=>{
+    const sr = await fetch(`${BACKEND}/auth/gmail/status`);
+    const sd = await sr.json();
+    if (sd.authenticated) {
+      clearInterval(poll); clearInterval(iv);
+      closeAuth(); toast('✓ Gmail authenticated!');
+    }
+  }, 5000);
+}
+function closeAuth() { document.getElementById('auth-panel').classList.remove('open'); }
+
+// ── EMAIL MODAL ────────────────────────────────────────────────────
+function openEmailModal(draft) {
+  if (!draft) return;
+  document.getElementById('em-to').value   = draft.to      || '';
+  document.getElementById('em-sub').value  = draft.subject || '';
+  document.getElementById('em-body').value = draft.body    || '';
+  pendingDraft = draft;
+  document.getElementById('email-modal').classList.add('open');
+}
+async function confirmEmail() {
+  if (!pendingDraft) return;
+  const to  = document.getElementById('em-to').value;
+  const sub = document.getElementById('em-sub').value;
+  const body= document.getElementById('em-body').value;
+  closeEmail();
+  const r = await fetch(`${BACKEND}/api/confirm`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'send_email',data:{to,subject:sub,body},session_id:SESSION}),
+  });
+  const d = await r.json();
+  toast(d.speech || 'Email sent.');
+}
+function closeEmail() {
+  document.getElementById('email-modal').classList.remove('open');
+  pendingDraft = null;
+}
+
+// ── MEDIA ──────────────────────────────────────────────────────────
+function openMedia(embedUrl, title) {
+  if (!embedUrl) return;
+  document.getElementById('yt-frame').src = embedUrl;
+  document.getElementById('media-modal').classList.add('open');
+  renderCard('NOW PLAYING', title || 'YouTube');
+}
+function closeMedia() {
+  document.getElementById('yt-frame').src = '';
+  document.getElementById('media-modal').classList.remove('open');
+}
+
+// ── RENDERERS ──────────────────────────────────────────────────────
+function renderSearch(hud) {
+  const cards = (hud.cards||[]).map(c=>`
+    <div class="card" style="padding:10px;cursor:pointer" onclick="window.open('${esc(c.link)}','_blank')">
+      <div style="font-size:10px;color:var(--cyan);margin-bottom:3px">${esc(c.title||'')}</div>
+      <div style="font-size:11px;color:#bde6ff">${esc((c.snippet||'').slice(0,130))}…</div>
+      <div class="card-meta">${esc(c.link||'')}</div>
+    </div>`).join('');
+  setContent(`<div class="card">
+    <div class="card-head">◈ Search — ${esc(hud.query||'')}</div>
+    <div class="card-body">${esc(hud.summary||'')}</div>
+  </div>${cards}`);
+}
+
+function renderEmails(hud) {
+  const el = document.getElementById('email-list');
+  el.innerHTML = (hud.emails||[]).map(e=>`
+    <div class="email-row">
+      <div class="email-from">${esc((e.from||'').slice(0,40))}</div>
+      <div class="email-subj">${esc(e.subject||'')}</div>
+      <div class="email-snip">${esc((e.snippet||'').slice(0,90))}</div>
+    </div>`).join('');
+  renderCard('INBOX', hud.summary||'');
+}
+
+function renderScan(hud) {
+  setContent(`<div class="card" style="border-color:var(--green)">
+    <div class="card-head" style="color:var(--green)">◉ OBJECT IDENTIFIED</div>
+    <div style="font-size:26px;font-weight:900;color:#fff;margin:8px 0">${esc(hud.label||'')}</div>
+    <div style="font-size:9px;color:var(--green);margin-bottom:10px">
+      CONFIDENCE: ${Math.round((hud.confidence||0)*100)}%</div>
+    <div class="card-body">${esc(hud.info||'')}</div>
+  </div>`);
+}
+
+function renderTranslation(hud) {
+  setContent(`<div class="card">
+    <div class="card-head">◈ Translation → ${esc(hud.language||'')}</div>
+    <div style="font-size:11px;color:rgba(0,200,255,.5);margin-bottom:8px">${esc(hud.original||'')}</div>
+    <div style="font-size:18px;color:#fff;font-weight:700">${esc(hud.translated||'')}</div>
+  </div>`);
+}
+
+function renderStatus(hud) {
+  const rows = Object.entries(hud.systems||{}).map(([k,v])=>
+    `<div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:9px;color:rgba(0,200,255,.6)">${k.toUpperCase()}</span>
+      <span style="font-size:9px;color:${v.includes('online')||v.includes('auth')||v==='deepgram'||v==='cartesia'||v==='google'?'var(--green)':'var(--gold)'}">${v.toUpperCase()}</span>
+    </div>`).join('');
+  setContent(`<div class="card"><div class="card-head">◈ System Status</div>${rows}</div>`);
+}
+
+function renderCard(title, body) {
+  setContent(`<div class="card">
+    <div class="card-head">◈ ${esc(title)}</div>
+    <div class="card-body">${esc(body||'')}</div>
+  </div>`);
+}
+
+function showSuggestion(text, action) {
+  setContent(`<div class="card" style="border-color:var(--gold);text-align:center">
+    <div class="card-head" style="color:var(--gold)">◈ EDITH SUGGESTION</div>
+    <div class="card-body" style="margin-bottom:14px">${esc(text)}</div>
+    <button onclick="document.getElementById('cmd-input').value='${esc(action.replace('_',' '))}';sendText()"
+      style="background:rgba(240,192,64,.15);border:1px solid var(--gold);
+             color:var(--gold);font-family:var(--font);font-size:10px;letter-spacing:2px;
+             padding:8px 20px;cursor:pointer;border-radius:2px">▶ EXECUTE</button>
+  </div>`);
+}
+
+function setContent(html) {
+  document.getElementById('content').innerHTML = html;
+}
+
+// ── CHAT ─────────────────────────────────────────────────────────
+function addChat(role, text) {
+  const hist = document.getElementById('chat-hist');
+  const d    = document.createElement('div');
+  d.className= `cmsg ${role}`;
+  d.innerHTML= `<div class="who">${role==='user'?'YOU':'EDITH'}</div>${esc(text)}`;
+  hist.appendChild(d);
+  hist.scrollTop = hist.scrollHeight;
+}
+
+// ── GAZE ──────────────────────────────────────────────────────────
+let gazeX=50,gazeY=50,gazeVx=0,gazeVy=0;
+const GAZE_TARGETS=['laptop','window','whiteboard','document','person','desk','coffee cup','phone'];
+let gazeIdx=0;
+
+function tickGaze() {
+  // Micro-saccade simulation (replaced by real ML2 data via EDITH.updateGaze)
+  gazeVx = gazeVx*.85 + (.5-gazeX/100)*.025 + (Math.random()-.5)*.012;
+  gazeVy = gazeVy*.85 + (.5-gazeY/100)*.025 + (Math.random()-.5)*.012;
+  gazeX  = Math.max(5,Math.min(95,gazeX+gazeVx*100));
+  gazeY  = Math.max(5,Math.min(95,gazeY+gazeVy*100));
+  document.getElementById('gaze-cursor').style.left = gazeX+'%';
+  document.getElementById('gaze-cursor').style.top  = gazeY+'%';
+  if (Math.random()<.003) {
+    gazeIdx = (gazeIdx+1)%GAZE_TARGETS.length;
+    gazeTarget = GAZE_TARGETS[gazeIdx];
+    document.getElementById('gaze-target-lbl').textContent = 'TARGET: '+gazeTarget.toUpperCase();
+  }
+}
+
+// ── VOICE BARS ────────────────────────────────────────────────────
+function initBars() {
+  const c = document.getElementById('vbars');
+  for(let i=0;i<22;i++){
+    const b=document.createElement('div'); b.className='vbar'; b.style.height='4px';
+    c.appendChild(b); vBars.push(b);
+  }
+}
+function animBars(pcm) {
+  const step = Math.floor(pcm.length/vBars.length);
+  vBars.forEach((b,i)=>{
+    const sl = pcm.slice(i*step,(i+1)*step);
+    const rms= Math.sqrt(sl.reduce((s,v)=>s+v*v,0)/Math.max(sl.length,1));
+    b.style.height = Math.max(4,rms*220)+'px';
+  });
+}
+
+// ── SCAN FX ───────────────────────────────────────────────────────
+function runScanFx() {
+  const el = document.getElementById('scan-fx');
+  el.className = '';
+  void el.offsetWidth; // reflow
+  el.className = 'run';
+}
+
+// ── UTILITIES ─────────────────────────────────────────────────────
+const MODES={
+  search:'WEB SEARCH',media:'MEDIA',email:'EMAIL',compose:'COMPOSE',
+  scan:'OBJECT SCAN',info:'INFO',navigation:'NAVIGATION',
+  system:'SYSTEM',anchor:'ANCHOR',reminder:'REMINDER',
+  translate:'TRANSLATE',default:'ACTIVE',standby:'STANDBY',
+};
+function setMode(mode) {
+  document.getElementById('mode-lbl').textContent = 'MODE: '+(MODES[mode]||mode.toUpperCase());
+}
+function updateLat(ms) {
+  document.getElementById('lat-v').textContent  = ms+' ms';
+  document.getElementById('lat-badge').textContent = ms+' ms';
+  const pct = Math.max(0,Math.min(100,(300-ms)/3));
+  document.getElementById('lat-b').style.width  = pct+'%';
+}
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ── Advanced Feature Renderers ──────────────────────────────────────
+
+function renderSwarmBriefing(hud) {
+  const sections = (hud.sections||[]).map(s=>`
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:var(--cyan);letter-spacing:2px;margin-bottom:4px">${esc(s.title||'')}</div>
+      ${(s.items||[]).map(i=>`<div style="font-size:11px;color:#bde6ff;padding:2px 0;border-left:2px solid rgba(0,200,255,.3);padding-left:8px">${esc(i)}</div>`).join('')}
+    </div>`).join('');
+  setContent(`<div class="card" style="border-color:var(--gold)">
+    <div class="card-head" style="color:var(--gold)">◈ SWARM BRIEFING</div>
+    <div style="font-size:12px;color:#fff;margin-bottom:12px">${esc(hud.summary||'')}</div>
+    ${sections}
+    <div class="card-meta">${(hud.agents_used||[]).join(' · ')}</div>
+  </div>`);
+}
+
+function renderSpatialResult(hud) {
+  const objs = (hud.objects||[]).map(o=>`
+    <div style="padding:6px 0;border-bottom:1px solid rgba(0,200,255,.1)">
+      <div style="font-size:11px;color:#fff;font-weight:700">${esc(o.label||'')}</div>
+      <div style="font-size:10px;color:rgba(0,200,255,.6)">${esc(o.location||'')} · ${esc(o.last_seen||'')}</div>
+      ${o.conflict?`<div style="font-size:9px;color:var(--gold)">⚠ Moved ${o.conflict.distance_m}m</div>`:''}
+    </div>`).join('');
+  setContent(`<div class="card" style="border-color:#7040ff">
+    <div class="card-head" style="color:#a070ff">◈ WORLD MEMORY</div>
+    <div class="card-body" style="margin-bottom:10px">${esc(hud.answer||'')}</div>
+    ${objs}
+    <div class="card-meta">${hud.stats?.objects||0} objects in memory</div>
+  </div>`);
+}
+
+// Biometric panel — pulse waveform + BPM gauge
+let biometricChart = null;
+function renderBiometrics(data) {
+  if (!data) return;
+  const status = data.status;
+  if (status === 'collecting') {
+    setContent(`<div class="card" style="border-color:var(--cyan)">
+      <div class="card-head">◈ BIOMETRIC SENSING</div>
+      <div class="card-body">Collecting data… ${data.progress_pct||0}%</div>
+      <div class="mbar" style="margin-top:8px"><div class="mfill" style="width:${data.progress_pct||0}%"></div></div>
+    </div>`);
+    return;
+  }
+  if (status !== 'ready') return;
+  const bpm    = data.bpm||0;
+  const stress = data.stress_pct||0;
+  const colour = data.colour||'var(--green)';
+  const wave   = (data.waveform||[]).map((v,i)=>`${i},${50-v*40}`).join(' ');
+  setContent(`<div class="card" style="border-color:${colour}">
+    <div class="card-head" style="color:${colour}">◈ BIOMETRICS  ·  rPPG</div>
+    <div style="display:flex;justify-content:space-around;margin:10px 0">
+      <div style="text-align:center">
+        <div style="font-size:32px;font-weight:900;color:${colour}">${bpm}</div>
+        <div style="font-size:8px;letter-spacing:2px;color:rgba(0,200,255,.6)">BPM</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:32px;font-weight:900;color:${stress>70?'var(--red)':stress>40?'var(--gold)':'var(--green)'}">${stress}%</div>
+        <div style="font-size:8px;letter-spacing:2px;color:rgba(0,200,255,.6)">STRESS</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:32px;font-weight:900;color:var(--cyan)">${data.hrv_ms||0}</div>
+        <div style="font-size:8px;letter-spacing:2px;color:rgba(0,200,255,.6)">HRV ms</div>
+      </div>
+    </div>
+    <svg viewBox="0 0 ${(data.waveform||[]).length} 100" style="width:100%;height:50px;border:1px solid rgba(0,200,255,.2);border-radius:2px">
+      <polyline points="${wave}" fill="none" stroke="${colour}" stroke-width="1.5"/>
+    </svg>
+    <div class="card-meta">Confidence: ${Math.round((data.confidence||0)*100)}%  ·  ${data.fps_actual||0} fps</div>
+  </div>`);
+}
+
+function updateBiometricBadge(data) {
+  if (data?.status !== 'ready') return;
+  // Update left panel metric
+  const bpmEl = document.getElementById('lat-v');  // reuse latency slot for BPM
+  if (bpmEl && data.bpm) bpmEl.textContent = data.bpm + ' BPM';
+}
+
+function renderAmbientSummary(hud) {
+  const items = (hud.action_items||[]).map(i=>`
+    <div style="font-size:10px;color:#bde6ff;padding:3px 0;border-left:2px solid var(--gold);padding-left:8px">${esc(i)}</div>`).join('');
+  const decs  = (hud.decisions||[]).map(d=>`
+    <div style="font-size:10px;color:var(--green);padding:3px 0">✓ ${esc(d)}</div>`).join('');
+  setContent(`<div class="card" style="border-color:var(--gold)">
+    <div class="card-head" style="color:var(--gold)">◈ MEETING INTELLIGENCE</div>
+    <div class="card-body" style="margin-bottom:10px">${esc(hud.summary||'')}</div>
+    ${items ? `<div style="font-size:8px;letter-spacing:2px;color:var(--gold);margin-bottom:4px">ACTION ITEMS</div>${items}` : ''}
+    ${decs  ? `<div style="font-size:8px;letter-spacing:2px;color:var(--green);margin:8px 0 4px">DECISIONS</div>${decs}` : ''}
+  </div>`);
+}
+
+function renderPrediction(hud) {
+  setContent(`<div class="card" style="border-color:var(--cyan)">
+    <div class="card-head">◈ EDITH PREDICTS</div>
+    <div class="card-body" style="margin-bottom:14px">${esc(hud.speech||'')}</div>
+    ${hud.action ? `<button onclick="document.getElementById('cmd-input').value='${esc(hud.action.replace('_',' '))}';sendText()"
+      style="background:rgba(0,60,140,.35);border:1px solid var(--cyan);color:var(--cyan);
+             font-family:var(--font);font-size:10px;letter-spacing:2px;
+             padding:8px 20px;cursor:pointer;border-radius:2px">▶ DO IT</button>` : ''}
+    ${hud.reason ? `<div class="card-meta">${esc(hud.reason)}</div>` : ''}
+  </div>`);
+}
+
+function renderTutorial(hud) {
+  const steps = (hud.steps||[]).map((s,i)=>`
+    <div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-start">
+      <span style="color:var(--cyan);font-weight:700;font-size:14px;min-width:20px">${i+1}</span>
+      <span style="font-size:11px;color:#bde6ff">${esc(s)}</span>
+    </div>`).join('');
+  setContent(`<div class="card" style="border-color:var(--gold)">
+    <div class="card-head" style="color:var(--gold)">◈ EDITH TUTORIAL — ${esc(hud.title||'')}</div>
+    ${steps}
+    <div class="card-meta">Target: ${esc(hud.target||'')}  ·  Load: ${Math.round((hud.load||0)*100)}%</div>
+  </div>`);
+}
+
+function handleProactiveIntervention(msg) {
+  const t = msg.type;
+  if (t === 'simplify_hud') {
+    // Reduce cognitive load — hide non-essential panels
+    document.getElementById('right').style.opacity = '0.3';
+    setTimeout(()=>document.getElementById('right').style.opacity='1', 30000);
+    toast('HUD simplified — cognitive load high');
+  } else if (t === 'tutorial_overlay') {
+    renderTutorial(msg);
+    addChat('assistant', msg.speech||'');
+  } else if (t === 'idle_briefing') {
+    showPrediction(msg);
+  }
+  addChat('assistant', msg.speech||'');
+}
+
+function showPrediction(msg) {
+  setContent(`<div class="card" style="border-color:var(--cyan);text-align:center">
+    <div class="card-head" style="color:var(--cyan)">◈ EDITH ANTICIPATES</div>
+    <div class="card-body" style="margin-bottom:14px">${esc(msg.speech||msg.text||'')}</div>
+    ${msg.action ? `<button onclick="document.getElementById('cmd-input').value='${esc((msg.query||msg.action).replace(/_/g,' '))}';sendText()"
+      style="background:rgba(0,60,140,.35);border:1px solid var(--cyan);color:var(--cyan);
+             font-family:var(--font);font-size:10px;letter-spacing:2px;
+             padding:8px 20px;cursor:pointer;border-radius:2px">▶ YES, DO IT</button>` : ''}
+  </div>`);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+function initUI() {
+  initBars();
+  setInterval(tickGaze, 100);
+  setInterval(()=>{
+    document.getElementById('clock').textContent =
+      new Date().toLocaleTimeString('en-US',{hour12:false});
+  },1000);
+  // Signal flicker
+  setInterval(()=>{
+    document.getElementById('signal').textContent =
+      ['████','▂▄▆█','▂▄▇█','▂▃▆█'][Math.floor(Math.random()*4)];
+  },2200);
+  // Battery (ML2 reports via EDITH bridge; simulate otherwise)
+  simulateBattery();
+  // Keyboard
+  document.addEventListener('keydown',e=>{
+    if(e.code==='Space'&&document.activeElement.tagName!=='INPUT'&&
+       document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();toggleVoice();}
+    if(e.code==='Escape'){closeEmail();closeMedia();closeAuth();}
+  });
+  // WS heartbeat
+  setInterval(()=>wsSend({type:'ping'}),20000);
+}
+
+function simulateBattery() {
+  if (navigator.getBattery) {
+    navigator.getBattery().then(b=>{
+      const upd = ()=>{
+        const pct = Math.round(b.level*100);
+        document.getElementById('bat-v').textContent = pct+'%';
+        document.getElementById('bat-b').style.width  = pct+'%';
+      };
+      upd(); b.onlevelchange=upd;
+    });
+  } else {
+    // Simulate
+    let bat=87;
+    document.getElementById('bat-v').textContent = bat+'%';
+    document.getElementById('bat-b').style.width  = bat+'%';
+    setInterval(()=>{
+      if(Math.random()<.05){ bat=Math.max(0,bat-1);
+        document.getElementById('bat-v').textContent=bat+'%';
+        document.getElementById('bat-b').style.width=bat+'%'; }
+    },60000);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ML2 JAVASCRIPT BRIDGE
+// Kotlin Android code calls these via evaluateJavascript()
+// ─────────────────────────────────────────────────────────────────
+window.EDITH = {
+
+  // ── Speech callbacks — called by Kotlin evaluateJavascript ──────
+  onSpeechResult(text, isFinal) {
+    if (!text || !text.trim()) return;
+
+    // Deduplicate: if we already handled a final result, ignore subsequent calls
+    // (happens when both WAV-upload and WS-chunk paths fire for same utterance)
+    if (isFinal && this._resultHandled) {
+      console.log('[EDITH] onSpeechResult: duplicate final ignored:', text.slice(0,30));
+      this._resultHandled = false;   // reset for next utterance
+      return;
+    }
+
+    // Interim result — just show in text box
+    if (!isFinal) {
+      document.getElementById('cmd-input').value = text;
+      animBarsFromText(text.length);
+      return;
+    }
+
+    // Mark as handled so duplicate doesn't fire toast
+    this._resultHandled = true;
+    clearInterval(voiceCountdown); voiceCountdown = null;
+    setListening(false);
+
+    // Backend / Kotlin signal codes — not real speech
+    if (text === '__no_speech__' || text === '__no_stt__') {
+      // Only show toast if we haven't already sent a real command
+      if (!this._lastSent || Date.now() - this._lastSent > 2000) {
+        toast('No speech detected — speak clearly then tap mic again');
+        document.getElementById('cmd-input').focus();
+      }
+      this._resultHandled = false;
+      return;
+    }
+    if (text.startsWith('__error:')) {
+      const err = text.replace('__error:','').replace(/__$/,'');
+      if (err.includes('mic') || err.includes('RECORD')) {
+        toast('🎙 Mic blocked — ML2 Settings → Privacy → Microphone → Allow');
+      } else if (err.includes('http_')) {
+        toast('Voice server error — check backend is running');
+      } else {
+        toast('🎙 ' + err);
+      }
+      this._resultHandled = false;
+      return;
+    }
+
+    // Real transcript — send to LLM
+    const cleanText = text.trim();
+    console.log('[EDITH] Voice transcript:', cleanText);
+    document.getElementById('cmd-input').value = cleanText;
+    addChat('user', cleanText);
+    memTurns++;
+    document.getElementById('mem-v').textContent = memTurns;
+    document.getElementById('cmd-input').value = '';
+    this._lastSent = Date.now();
+
+    if (!wsSend({type:'text_command', text:cleanText, gaze_target:gazeTarget})) {
+      apiSend(cleanText);
+    }
+  },
+
+  onSpeechError(errMsg) {
+    clearInterval(voiceCountdown); voiceCountdown = null;
+    setListening(false);
+    // Suppress 'no-speech' errors if we already got a successful result
+    if (this._lastSent && Date.now() - this._lastSent < 3000) return;
+    if (errMsg === 'no-speech' || errMsg === 'aborted') return;  // normal stop
+    if (errMsg.includes('permission') || errMsg.includes('not-allowed')) {
+      toast('🎙 Mic denied — ML2 Settings → Privacy → Microphone → Allow');
+    } else if (errMsg.includes('network')) {
+      toast('🎙 Network error — check WiFi');
+    } else {
+      console.warn('[EDITH] Speech error (suppressed toast):', errMsg);
+      // Don't toast — user already has their result
+    }
+  },
+
+  /** Called by EyeTrackingService ~10fps with real Camera2 data */
+  updateGaze(target, normX, normY, durationMs) {
+    gazeTarget = target||'';
+    document.getElementById('gaze-cursor').style.left = (normX*100)+'%';
+    document.getElementById('gaze-cursor').style.top  = (normY*100)+'%';
+    document.getElementById('gaze-target-lbl').textContent =
+      'TARGET: '+(target||'SCANNING…').toUpperCase().slice(0,28);
+    if (durationMs > 1500 && target) {
+      wsSend({type:'gaze_update',target,duration_ms:durationMs,is_new_target:true});
+    }
+  },
+
+  /** Called by HandTrackingService on gesture events */
+  sendGesture(gesture) {
+    document.getElementById('gesture-lbl').textContent = gesture.toUpperCase();
+    wsSend({type:'gesture',gesture});
+    if (gesture==='thumbtap')  toggleVoice();
+    if (gesture==='open_palm') {
+      const hud=document.getElementById('hud');
+      hud.style.opacity = hud.style.opacity==='0'?'1':'0';
+    }
+  },
+
+  /** Called by ARRenderingService with cropped CV camera frame */
+  identifyObject(imageB64, targetLabel) {
+    gazeTarget = targetLabel||'';
+    runScanFx();
+    wsSend({type:'text_command',text:`Identify ${targetLabel||'this object'}`,
+            gaze_target:targetLabel, image_b64:imageB64});
+  },
+
+  /** Called by VoiceService with raw PCM chunk */
+  pushAudio(b64, isFinal) {
+    wsSend({type:'audio_chunk',data:b64,is_final:!!isFinal,gaze_target:gazeTarget});
+  },
+
+  /** Called by MainActivity with device battery level */
+  updateBattery(pct) {
+    document.getElementById('bat-v').textContent = pct+'%';
+    document.getElementById('bat-b').style.width  = pct+'%';
+  },
+
+  /** Toggle entire HUD visibility */
+  toggleHUD() {
+    const hud=document.getElementById('hud');
+    hud.style.opacity = hud.style.opacity==='0'?'1':'0';
+  },
+
+  /** Start Gmail auth from native UI trigger */
+  startGmailAuth: () => startGmailAuth(),
+};
+
+// ── START ──────────────────────────────────────────────────────────
+boot();
+</script>
+</body>
+</html>
