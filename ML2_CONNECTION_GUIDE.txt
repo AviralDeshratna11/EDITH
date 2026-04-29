@@ -1,0 +1,183 @@
+ML2 CONNECTION GUIDE — EDITH AR
+================================
+Follow these steps in order. Each step has a pass/fail test.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1 — START THE BACKEND SERVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+On your laptop/PC, open a terminal and run:
+
+  cd EDITH-AR/backend
+  pip install -r requirements.txt
+  cp ../.env.example .env           ← do this once
+  # Edit .env and add OPENROUTER_API_KEY
+  python server.py
+
+You should see:
+  INFO — EDITH booting…
+  INFO — Starting EDITH on 0.0.0.0:8000
+
+✅ TEST: Open http://localhost:8000/api/health in your browser.
+   Should show: {"status":"online","version":"2.1.0"}
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2 — FIND YOUR LAPTOP'S LOCAL IP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Windows:
+  ipconfig
+  → Look for "IPv4 Address" under your WiFi adapter
+  → e.g.  192.168.1.100
+
+Mac / Linux:
+  ifconfig | grep "inet " | grep -v 127.0.0.1
+  → e.g.  192.168.1.100
+
+Write this IP down — you'll need it in every step below.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3 — OPEN PORT 8000 IN YOUR FIREWALL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is the #1 reason ML2 can't reach the server.
+
+Windows (run as Administrator):
+  netsh advfirewall firewall add rule name="EDITH AR" ^
+    dir=in action=allow protocol=TCP localport=8000
+
+  Or: Windows Defender Firewall → Advanced Settings →
+      Inbound Rules → New Rule → Port → TCP 8000 → Allow
+
+Mac:
+  sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add python3
+  sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp python3
+  (Or: System Settings → Firewall → Options → add Python → Allow)
+
+Linux:
+  sudo ufw allow 8000/tcp
+
+✅ TEST FROM ML2: On the Magic Leap 2, open the browser and go to:
+   http://YOUR-LAPTOP-IP:8000/api/health
+   Should show: {"status":"online"}
+
+   If you see a connection error → firewall is still blocking.
+   If you see "refused" → server isn't running.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4 — LOAD THE SETUP PAGE ON ML2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+On Magic Leap 2:
+  1. Put on the glasses
+  2. Open the browser app (it's in the app drawer)
+  3. Navigate to: http://YOUR-LAPTOP-IP:8000/setup
+     (e.g. http://192.168.1.100:8000/setup)
+  4. The EDITH Connection Setup page will appear
+  5. It will auto-test the connection and show diagnostics
+  6. If everything is green → press "LAUNCH EDITH"
+  7. The full EDITH holographic HUD loads
+
+✅ The setup page saves your IP in localStorage — next time
+   just go to http://YOUR-LAPTOP-IP:8000/setup and it auto-launches.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5 — ALLOW MIC ON ML2 BROWSER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When you first press ENGAGE on the HUD, the ML2 browser
+will ask for microphone permission.
+
+To allow it proactively:
+  ML2 Settings → Privacy → Microphone → Browser → Allow
+
+Or: In the browser address bar, tap the 🔒 icon → Permissions → Mic → Allow
+
+✅ TEST: Press ENGAGE or tap the mic button → speak a command.
+   You should see your words appear in the text box.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 6 (OPTIONAL) — ADB WIFI FOR APK DEPLOYMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The browser method above is fully functional for the hackathon.
+The APK gives you eye/hand tracking integration. Here's how:
+
+A. Enable Developer Mode on ML2:
+   Settings → System → Developer Options → USB Debugging ON
+   Settings → System → Developer Options → Network Debugging ON
+
+B. Connect USB cable between ML2 and laptop, then:
+   adb devices                          ← should show ML2
+   adb tcpip 5555                       ← switch to WiFi mode
+   adb connect [ML2-IP]:5555            ← get ML2 IP from Settings→About
+
+C. Verify connection:
+   adb devices
+   → Should show: [ML2-IP]:5555  device
+
+D. Find ML2's IP address:
+   On ML2: Settings → About → WiFi IP Address
+
+E. Build and install APK:
+   cd EDITH-AR/android
+   # Edit app/src/main/java/com/edith/ml2/MainActivity.kt
+   # Change: const val BACKEND_HOST = "YOUR-LAPTOP-IP"
+   ./gradlew installDebug               ← requires Android Studio / SDK
+
+F. Launch on ML2:
+   adb shell am start -n com.edith.ml2/.MainActivity
+
+✅ ADB TEST:
+   adb shell curl http://YOUR-LAPTOP-IP:8000/api/health
+   Should return health JSON.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem: ML2 browser shows "Connection refused"
+Fix:     Server not running → run: python server.py
+
+Problem: ML2 browser shows blank / loading forever
+Fix:     Firewall blocking port 8000 → see Step 3
+
+Problem: ML2 browser shows "Connection reset" or times out
+Fix:     Different WiFi networks → put both on same router/hotspot
+
+Problem: EDITH HUD loads but WS badge shows "REST"
+Fix:     Normal! REST mode works fully. WebSocket may be blocked
+         by ML2's Chromium security. All features still work.
+
+Problem: Voice button does nothing
+Fix 1:   Allow mic in ML2 browser settings (Settings→Privacy→Mic)
+Fix 2:   Type commands in the text box instead — works identically
+
+Problem: Gmail says "not authenticated"
+Fix:     Type "read my emails" → follow the device auth flow
+         A code appears on screen → enter it at google.com/device
+
+Problem: Server crashes on startup
+Fix:     Check backend/.env has OPENROUTER_API_KEY set
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUICK REFERENCE — COMMANDS TO TRY FIRST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Type or say these to test each feature:
+
+  "What is the speed of light"          ← web search
+  "Play Daft Punk on YouTube"           ← YouTube
+  "What's the weather in Mumbai"        ← weather
+  "Translate hello to Spanish"          ← translation
+  "System status"                       ← check all services
+  "Read my emails"                      ← Gmail (needs auth)
+  "Tell me a joke"                      ← chat
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
