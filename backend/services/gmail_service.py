@@ -26,7 +26,13 @@ class GmailService:
         self._tokens: dict = {}
         self._load_tokens()
         status = "authenticated" if self._tokens else "not authenticated"
+        if not CLIENT_ID or not CLIENT_SECRET:
+            log.warning("⚠️ Gmail: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set in .env")
+            log.warning("   → Run /auth/gmail/start to authenticate with device flow")
         log.info(f"GmailService ready | {status}")
+        if not self._tokens and (CLIENT_ID and CLIENT_SECRET):
+            log.info("   Tip: Say 'read my emails' or 'send email' to trigger auth flow")
+
 
     # ── Device Flow ──────────────────────────────────────────────────────────
 

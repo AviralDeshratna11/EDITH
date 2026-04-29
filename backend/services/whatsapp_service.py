@@ -41,13 +41,20 @@ _contacts:    dict[str, dict] = {}   # phone → {name, last_seen, position}
 class WhatsAppService:
     """
     WhatsApp Cloud API — spatial AR messaging.
+    NOTE: Requires Meta Business Account with WhatsApp Business API.
+          If not configured, service gracefully returns stubs (no messages).
     """
 
     def __init__(self):
         self._http      = httpx.AsyncClient(timeout=15.0)
         self._connected = bool(WA_TOKEN and WA_PHONE_ID)
         self._session_token: Optional[str] = None
-        log.info(f"WhatsAppService | connected={self._connected}")
+        if not self._connected:
+            log.warning("⚠️ WhatsApp not configured — requires WHATSAPP_TOKEN and WHATSAPP_PHONE_ID")
+            log.warning("   → Set up Meta Business Account or skip (messaging disabled)")
+        else:
+            log.info("✅ WhatsApp Cloud API connected")
+        log.info(f"WhatsAppService | mode={'business' if self._connected else 'stub'}")
 
     # ── QR AUTH FLOW ──────────────────────────────────────────────────
 
@@ -211,9 +218,13 @@ class WhatsAppService:
     # ── DATA ACCESS ───────────────────────────────────────────────────
 
     def get_recent(self, count: int = 10) -> list[dict]:
+        if not self._connected:
+            return []
         return list(reversed(_messages[-count:]))
 
     def get_unread(self) -> list[dict]:
+        if not self._connected:
+            return []
         return [m for m in _messages if not m["read"]]
 
     def mark_read(self, msg_id: str):

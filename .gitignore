@@ -5,6 +5,10 @@
 
 # Python
 __pycache__/
+# Credential files
+backend/data/gmail_tokens.json
+backend/data/whatsapp_*.json
+
 *.py[cod]
 *$py.class
 *.so
